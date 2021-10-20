@@ -1,10 +1,12 @@
-AlgaAudioControl : UGen {
-	*ar { |input, gain|
-		/* TODO */
-		^this.multiNew('audio', input, gain);
-	}
-	checkInputs {
-		/* TODO */
-		^this.checkValidInputs;
-	}
+AlgaAudioControl : AudioControl {
+    *ar { arg values;
+        ^this.multiNewList(['audio'] ++ values.asArray)
+    }
 }
+
+AlgaLagControl : LagControl {
+    *ar { arg values, lags;
+        ^AlgaAudioControl.ar(values).lag(lags)
+    }
+}
+
