@@ -1,0 +1,8 @@
+class:: AlgaAudioControl
+summary:: Fix for AudioControl for SuperCollider < 3.13
+categories:: Alga
+related:: Classes/AudioControl
+
+description::
+
+Fix for AudioControl for SuperCollider < 3.13

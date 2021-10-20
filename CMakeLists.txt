@@ -65,7 +65,6 @@ endif()
 # Begin target AlgaAudioControl
 
 set(AlgaAudioControl_cpp_files
-    plugins/AlgaAudioControl/AlgaAudioControl.hpp
     plugins/AlgaAudioControl/AlgaAudioControl.cpp
 )
 set(AlgaAudioControl_sc_files
