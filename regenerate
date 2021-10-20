@@ -1,1 +1,0 @@
-python /home/francesco/Sources/supercollider/tools/cmake_gen/generate_server_plugin_cmake.py -P "AlgaAudioControl" -p "plugins/AlgaAudioControl" -a "Francesco Cameli"

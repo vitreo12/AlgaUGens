@@ -29,10 +29,3 @@ SuperCollider extensions directory: add the option `-DCMAKE_INSTALL_PREFIX=/path
 
 It's expected that the SuperCollider repo is cloned at `../supercollider` relative to this repo. If
 it's not: add the option `-DSC_PATH=/path/to/sc/source`.
-
-### Developing
-
-Use the command in `regenerate` to update CMakeLists.txt when you add or remove files from the
-project. You don't need to run it if you only change the contents of existing files. You may need to
-edit the command if you add, remove, or rename plugins, to match the new plugin paths. Run the
-script with `--help` to see all available options.
