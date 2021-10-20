@@ -1,8 +1,6 @@
 # AlgaAudioControl
 
-Author: Francesco Cameli
-
-Fix for AudioControl
+Fix for `AudioControl` for SuperCollider < 3.13.
 
 ### Requirements
 
