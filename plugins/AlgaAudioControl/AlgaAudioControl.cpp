@@ -6,7 +6,7 @@ struct AlgaAudioControl : public Unit
 {
     float* prevVal;
     float* m_prevBus;
-    bool m_touchedInPreviousCycle;
+    bool m_busUsedInPrevCycle;
 };
 
 static void AlgaAudioControl_next_1(AlgaAudioControl* unit, int inNumSamples);
@@ -17,7 +17,7 @@ void AlgaAudioControl_Ctor(AlgaAudioControl* unit)
 {
     unit->prevVal = (float*)RTAlloc(unit->mWorld, unit->mNumOutputs * sizeof(float));
     unit->m_prevBus = NULL;
-    unit->m_touchedInPreviousCycle = false;
+    unit->m_busUsedInPrevCycle = false;
     for (int i = 0; i < unit->mNumOutputs; i++) {
         unit->prevVal[i] = 0.0;
     }
@@ -41,10 +41,10 @@ void AlgaAudioControl_next_k(AlgaAudioControl* unit, int inNumSamples)
     int32* touched = world->mAudioBusTouched;
     int32* channelOffsets = unit->mParent->mAudioBusOffsets;
 
-    //Changing buffer: reset m_touchedInPreviousCycle
+    //Changing buffer: reset m_busUsedInPrevCycle
     if(*mapin != unit->m_prevBus)
     {
-        unit->m_touchedInPreviousCycle = false;
+        unit->m_busUsedInPrevCycle = false;
         unit->m_prevBus = *mapin;
     }
 
@@ -87,19 +87,19 @@ void AlgaAudioControl_next_k(AlgaAudioControl* unit, int inNumSamples)
                 int diff = bufCounter - touched[thisChannelOffset];
                 if (validOffset && diff == 0) {
                     Copy(inNumSamples, out, *mapin);
-                    unit->m_touchedInPreviousCycle = true;
+                    unit->m_busUsedInPrevCycle = true;
                 }
                 else if(validOffset && diff == 1) {
-                    if(unit->m_touchedInPreviousCycle){
+                    if(unit->m_busUsedInPrevCycle){
                         Fill(inNumSamples, out, 0.f);
-                        unit->m_touchedInPreviousCycle = false;
+                        unit->m_busUsedInPrevCycle = false;
                     }
                     else
                         Copy(inNumSamples, out, *mapin);
                 }
                 else {
                     Fill(inNumSamples, out, 0.f);
-                    unit->m_touchedInPreviousCycle = false;
+                    unit->m_busUsedInPrevCycle = false;
                 }
             } break;
         }
@@ -122,10 +122,10 @@ void AlgaAudioControl_next_1(AlgaAudioControl* unit, int inNumSamples) {
     int32 bufCounter = world->mBufCounter;
     int32* channelOffsets = unit->mParent->mAudioBusOffsets;
 
-    //Changing buffer: reset m_touchedInPreviousCycle
+    //Changing buffer: reset m_busUsedInPrevCycle
     if(mapin != unit->m_prevBus)
     {
-        unit->m_touchedInPreviousCycle = false;
+        unit->m_busUsedInPrevCycle = false;
         unit->m_prevBus = mapin;
     }
 
@@ -153,19 +153,19 @@ void AlgaAudioControl_next_1(AlgaAudioControl* unit, int inNumSamples) {
             int diff = bufCounter - touched[thisChannelOffset];
             if (validOffset && diff == 0) {
                 Copy(inNumSamples, out, mapin);
-                unit->m_touchedInPreviousCycle = true;
+                unit->m_busUsedInPrevCycle = true;
             }
             else if(validOffset && diff == 1) {
-                if(unit->m_touchedInPreviousCycle){
+                if(unit->m_busUsedInPrevCycle){
                     Fill(inNumSamples, out, 0.f);
-                    unit->m_touchedInPreviousCycle = false;
+                    unit->m_busUsedInPrevCycle = false;
                 }
                 else
                     Copy(inNumSamples, out, mapin);
             }
             else {
                 Fill(inNumSamples, out, 0.f);
-                unit->m_touchedInPreviousCycle = false;
+                unit->m_busUsedInPrevCycle = false;
             } break;
         }
     }
