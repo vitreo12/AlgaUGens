@@ -25,9 +25,9 @@ jobs:
       SC_PATH: ${{ github.workspace }}/supercollider
       BUILD_PATH: ${{ github.workspace }}/build
       INSTALL_PATH: ${{ github.workspace }}/build/Install
-      ARCHIVE_NAME: AlgaAudioControl-${{ matrix.name }}.zip
+      ARCHIVE_NAME: AlgaUGens-${{ matrix.name }}.zip
     steps:
-    - name: Checkout AlgaAudioControl
+    - name: Checkout AlgaUGens
       uses: actions/checkout@v2
 
     - name: Checkout SuperCollider
@@ -60,14 +60,14 @@ jobs:
       if: runner.os != 'Windows'
       shell: bash
       working-directory: ${{ env.INSTALL_PATH }}
-      run: zip -r "$ARCHIVE_NAME" "AlgaAudioControl"
+      run: zip -r "$ARCHIVE_NAME" "AlgaUGens"
 
       # Gather all files in a zip
     - name: Zip up build (Windows)
       if: runner.os == 'Windows'
       shell: bash
       working-directory: ${{ env.INSTALL_PATH }}
-      run: 7z a "$ARCHIVE_NAME" -tzip "AlgaAudioControl"
+      run: 7z a "$ARCHIVE_NAME" -tzip "AlgaUGens"
 
     - name: Upload binaries to release
       uses: svenstaro/upload-release-action@v2
