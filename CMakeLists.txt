@@ -39,8 +39,8 @@ project(${project_name})
 sc_do_initial_compiler_config() # do after setting project so compiler ID is available
 
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT OR NOT CMAKE_INSTALL_PREFIX)
-    message(WARNING "No install prefix provided, defaulting to $BUILD_DIR/install")
-    set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/install" CACHE PATH "Install prefix" FORCE)
+    message(WARNING "No install prefix provided, defaulting to $BUILD_DIR/install/AlgaUGens")
+    set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/install/AlgaUGens" CACHE PATH "Install prefix" FORCE)
 endif()
 
 message(STATUS "Install directory set to: ${CMAKE_INSTALL_PREFIX}")
