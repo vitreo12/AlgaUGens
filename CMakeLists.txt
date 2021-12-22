@@ -101,9 +101,9 @@ set(AlgaDynamicIEnvGen_schelp_files
 sc_add_server_plugin(
     "AlgaDynamicIEnvGen/AlgaDynamicIEnvGen" # desination directory
     "AlgaDynamicIEnvGen" # target name
-    "${AlgaAudioControl_cpp_files}"
-    "${AlgaAudioControl_sc_files}"
-    "${AlgaAudioControl_schelp_files}"
+    "${AlgaDynamicIEnvGen_cpp_files}"
+    "${AlgaDynamicIEnvGen_sc_files}"
+    "${AlgaDynamicIEnvGen_schelp_files}"
 )
 
 # End target AlgaDynamicIEnvGen
