@@ -1,6 +1,10 @@
 # AlgaAudioControl
 
-Fix for `AudioControl` for SuperCollider < 3.13.
+Fix for `AudioControl` (https://github.com/supercollider/supercollider/pull/5601#issuecomment-949420786).
+
+# AlgaDynamicIEnvGen
+
+Dynamic interpolation of `Env`s.
 
 ### Requirements
 
@@ -11,8 +15,8 @@ Fix for `AudioControl` for SuperCollider < 3.13.
 
 Clone the project:
 
-    git clone https://github.com/vitreo12/AlgaAudioControl
-    cd AlgaAudioControl
+    git clone https://github.com/vitreo12/AlgaUGens
+    cd AlgaUGens
     mkdir build
     cd build
 

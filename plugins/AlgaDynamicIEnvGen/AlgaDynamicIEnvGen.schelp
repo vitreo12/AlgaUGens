@@ -1,0 +1,8 @@
+class:: AlgaDynamicIEnvGen
+summary:: Dynamic interpolation of Env
+categories:: Alga
+related:: Classes/Env
+
+description::
+
+Dynamic interpolation of Env.
