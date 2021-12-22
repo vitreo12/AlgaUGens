@@ -24,7 +24,7 @@ jobs:
     env:
       SC_PATH: ${{ github.workspace }}/supercollider
       BUILD_PATH: ${{ github.workspace }}/build
-      INSTALL_PATH: ${{ github.workspace }}/build/install/AlgaUGens
+      INSTALL_PATH: ${{ github.workspace }}/build/install
       ARCHIVE_NAME: AlgaUGens-${{ matrix.name }}.zip
     steps:
     - name: Checkout AlgaUGens
@@ -46,7 +46,7 @@ jobs:
     - name: Configure CMake
       shell: bash
       working-directory: ${{ env.BUILD_PATH }}
-      run: cmake .. -DCMAKE_BUILD_TYPE='Release' -DSC_PATH="$SC_PATH" -DCMAKE_INSTALL_PREFIX="$INSTALL_PATH"
+      run: cmake .. -DCMAKE_BUILD_TYPE='Release' -DSC_PATH="$SC_PATH" 
 
     - name: Build
       shell: bash
@@ -60,14 +60,14 @@ jobs:
       if: runner.os != 'Windows'
       shell: bash
       working-directory: ${{ env.INSTALL_PATH }}
-      run: zip -r "$ARCHIVE_NAME" "../AlgaUGens"
+      run: zip -r "$ARCHIVE_NAME" "AlgaUGens"
 
       # Gather all files in a zip
     - name: Zip up build (Windows)
       if: runner.os == 'Windows'
       shell: bash
       working-directory: ${{ env.INSTALL_PATH }}
-      run: 7z a "$ARCHIVE_NAME" -tzip "../AlgaUGens"
+      run: 7z a "$ARCHIVE_NAME" -tzip "AlgaUGens"
 
     - name: Upload binaries to release
       uses: svenstaro/upload-release-action@v2
