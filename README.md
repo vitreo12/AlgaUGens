@@ -1,13 +1,5 @@
 # AlgaUGens
 
-## AlgaAudioControl
-
-Fix for `AudioControl` (https://github.com/supercollider/supercollider/pull/5601#issuecomment-949420786).
-
-## AlgaDynamicIEnvGen
-
-Dynamic interpolation of `Env`s.
-
 ### Requirements
 
 - CMake >= 3.5
