@@ -24,7 +24,7 @@ jobs:
     env:
       SC_PATH: ${{ github.workspace }}/supercollider
       BUILD_PATH: ${{ github.workspace }}/build
-      INSTALL_PATH: ${{ github.workspace }}/build/Install
+      INSTALL_PATH: ${{ github.workspace }}/build/install
       ARCHIVE_NAME: AlgaUGens-${{ matrix.name }}.zip
     steps:
     - name: Checkout AlgaUGens
