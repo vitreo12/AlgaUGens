@@ -5,19 +5,25 @@ static InterfaceTable *ft;
 struct ResettablePhasor {
     private:
         float phase;
+        float phaseResetVal;
+        float phaseResetValScale;
         float increment;
         bool  runOnce;
         Unit* unit;
 
     public:
         bool  release;
+        bool  releaseTriggered;
         bool  isFadeIn;
         bool  isFadeOut;
 
         inline void init(bool isFadeIn_ = false, bool isFadeOut_ = false) {
             phase = 0.0f;
+            phaseResetVal = 0.0f;
+            phaseResetValScale = 0.0f;
             increment = 0.0f;
             release = false;
+            releaseTriggered = false;
             runOnce = false;
             isFadeIn = isFadeIn_;
             isFadeOut = isFadeOut_;
@@ -32,10 +38,20 @@ struct ResettablePhasor {
             if(unit_)
                 unit = unit_;
 
-            if(release_)
-                release = release_;
+            //Retrieve peak and calculate scaling
+            phaseResetVal = phase;
+            if(phaseResetVal > 0.0f && phaseResetVal < 1.0)
+                phaseResetValScale = 1.0 / (1.0 - phaseResetVal);
 
-            phase = 0.0f;
+            //Only trigger the phase reset ONCE
+            if(release_ && !releaseTriggered)
+            {
+                release = true;
+                releaseTriggered = true;
+                phase = 0.0f;
+                phaseResetVal = 0.0f;
+                phaseResetValScale = 0.0f;
+            }
 
             if(freq > 0.0f)
                 increment = 1.0f / freq;
@@ -47,15 +63,21 @@ struct ResettablePhasor {
             float result = phase < 1.0f ? phase : 1.0f;
             result = increment < 1.0f ? result : 1.0f;
             phase += increment;
-            if((release || runOnce) && unit && phase > 1)
-            {
-                if(!unit->mDone)
+            if((release || runOnce) && unit && phase > 1) {
+                if(!unit->mDone) {
+                    unit->mDone = true;
                     DoneAction(2, unit);
-                unit->mDone = true;
+		        }
                 return 1.0f;
             }
+
             if(phase > 1)
                 phase = 1.0f;
+
+            //Scale by the last reset to have 0-1 range at all times (with varying speed according to fadeTime)
+            if(phaseResetVal > 0.0f && phaseResetVal < 1.0)
+                result = (result - phaseResetVal) * phaseResetValScale; //a.k.a optimized linlin
+            
             return result;
         }
 };
