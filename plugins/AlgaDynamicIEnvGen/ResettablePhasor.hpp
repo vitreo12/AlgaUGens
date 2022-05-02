@@ -60,10 +60,16 @@ struct ResettablePhasor {
         }
 
         inline float advance() {
-            float result = phase < 1.0f ? phase : 1.0f;
-            result = increment < 1.0f ? result : 1.0f;
-            phase += increment;
-            if((release || runOnce) && unit && phase > 1) {
+            float result;
+            if(phase < 1.0f) {
+                result = phase;
+                phase += increment;
+            }
+            else {
+                result = 1.0f;
+            }
+
+            if((release || runOnce) && unit && phase > 1.0f) {
                 if(!unit->mDone) {
                     unit->mDone = true;
                     DoneAction(2, unit);
@@ -71,11 +77,8 @@ struct ResettablePhasor {
                 return 1.0f;
             }
 
-            if(phase > 1)
-                phase = 1.0f;
-
             //Scale by the last reset to have 0-1 range at all times (with varying speed according to fadeTime)
-            if(phaseResetVal > 0.0f && phaseResetVal < 1.0)
+            if(phaseResetVal > 0.0f && phaseResetVal < 1.0f)
                 result = (result - phaseResetVal) * phaseResetValScale; //a.k.a optimized linlin
             
             return result;
