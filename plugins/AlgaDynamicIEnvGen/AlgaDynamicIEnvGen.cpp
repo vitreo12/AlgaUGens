@@ -16,6 +16,62 @@ void AlgaDynamicIEnvGen_Ctor(AlgaDynamicIEnvGen* unit);
 void AlgaDynamicIEnvGen_Dtor(AlgaDynamicIEnvGen* unit);
 }
 
+#define UPDATE_ENVVALS \
+    for (int i = 1; i <= numStages * 4; i++) { \
+        unit->m_envvals[i] = IN0(4 + i); \
+    }
+
+#define PHASOR_RESET_AR(RELEASE) \
+    float fadeTime = IN0(0); \
+    unit->phasor.reset(fadeTime * unit->mWorld->mSampleRate, unit, RELEASE);
+
+#define PHASOR_RESET_KR(RELEASE) \
+    float fadeTime = IN0(0); \
+    unit->phasor.reset((fadeTime * unit->mWorld->mSampleRate) / unit->mWorld->mBufLength, unit, RELEASE);
+
+void AlgaDynamicIEnvGen_Ctor(AlgaDynamicIEnvGen* unit) {
+
+    bool isFadeIn = (bool)IN0(unit->mNumInputs - 2);
+    bool isFadeOut = (bool)IN0(unit->mNumInputs - 1);
+
+    unit->m_resetVal = 1.0f; //Start from highest point (for fadeTime == 0)
+    unit->phasor.init(isFadeIn, isFadeOut);
+
+    // pointer, offset
+    // initlevel, numstages, totaldur,
+    // [dur, shape, curve, level] * numvals
+    int numStages = (int)IN0(3);
+    int numvals = numStages * 4; // initlevel + (levels, dur, shape, curves) * stages
+    float offset = unit->m_offset = IN0(1);
+    float point = unit->m_pointin = 0.0f - offset;
+    unit->m_envvals = (float*)RTAlloc(unit->mWorld, (int)(numvals + 1.) * sizeof(float));
+
+    if(unit->m_envvals)
+    {
+        unit->m_envvals[0] = IN0(2);
+
+        UPDATE_ENVVALS
+
+        if (unit->mCalcRate == calc_FullRate) {
+            PHASOR_RESET_AR(false)
+            SETCALC(AlgaDynamicIEnvGen_next_a);
+        } else {
+            PHASOR_RESET_KR(false)
+            SETCALC(AlgaDynamicIEnvGen_next_k);
+        }
+    }
+    else
+        SETCALC(ClearUnitOutputs);
+
+    //Always start from 1 (fully on)
+    OUT0(0) = 1.0f;
+}
+
+void AlgaDynamicIEnvGen_Dtor(AlgaDynamicIEnvGen* unit) { 
+    if(unit->m_envvals)
+        RTFree(unit->mWorld, unit->m_envvals); 
+}
+
 enum {
     shape_Step,
     shape_Linear,
@@ -79,60 +135,6 @@ enum {
         break;                                                                                                         \
     }                                                                                                                  \
     }
-
-#define UPDATE_ENVVALS \
-    for (int i = 1; i <= numStages * 4; i++) { \
-        unit->m_envvals[i] = IN0(4 + i); \
-    }
-
-#define PHASOR_RESET_AR(RELEASE) \
-    float fadeTime = IN0(0); \
-    unit->phasor.reset(fadeTime * unit->mWorld->mSampleRate, unit, RELEASE);
-
-#define PHASOR_RESET_KR(RELEASE) \
-    float fadeTime = IN0(0); \
-    unit->phasor.reset((fadeTime * unit->mWorld->mSampleRate) / unit->mWorld->mBufLength, unit, RELEASE);
-
-void AlgaDynamicIEnvGen_Ctor(AlgaDynamicIEnvGen* unit) {
-
-    bool isFadeIn = (bool)IN0(unit->mNumInputs - 2);
-    bool isFadeOut = (bool)IN0(unit->mNumInputs - 1);
-
-    unit->m_resetVal = 1.0f; //Start from highest point (for fadeTime == 0)
-    unit->phasor.init(isFadeIn, isFadeOut);
-
-    // pointer, offset
-    // initlevel, numstages, totaldur,
-    // [dur, shape, curve, level] * numvals
-    int numStages = (int)IN0(3);
-    int numvals = numStages * 4; // initlevel + (levels, dur, shape, curves) * stages
-    float offset = unit->m_offset = IN0(1);
-    float point = unit->m_pointin = 0.0f - offset;
-    unit->m_envvals = (float*)RTAlloc(unit->mWorld, (int)(numvals + 1.) * sizeof(float));
-
-    if(unit->m_envvals)
-    {
-        unit->m_envvals[0] = IN0(2);
-
-        UPDATE_ENVVALS
-
-        if (unit->mCalcRate == calc_FullRate) {
-            PHASOR_RESET_AR(false)
-            SETCALC(AlgaDynamicIEnvGen_next_a);
-        } else {
-            PHASOR_RESET_KR(false)
-            SETCALC(AlgaDynamicIEnvGen_next_k);
-        }
-    }
-
-    //Always start from 1 (fully on)
-    OUT0(0) = 1.0f;
-}
-
-void AlgaDynamicIEnvGen_Dtor(AlgaDynamicIEnvGen* unit) { 
-    if(unit->m_envvals)
-        RTFree(unit->mWorld, unit->m_envvals); 
-}
 
 void AlgaDynamicIEnvGen_next_a(AlgaDynamicIEnvGen* unit, int inNumSamples) {
     float* out = OUT(0);
