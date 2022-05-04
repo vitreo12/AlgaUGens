@@ -110,6 +110,30 @@ sc_add_server_plugin(
 ####################################################################################################
 
 ####################################################################################################
+# Begin target AlgaDynamicIEnvGenBuf
+
+set(AlgaDynamicIEnvGenBuf_cpp_files
+    plugins/AlgaDynamicIEnvGenBuf/AlgaDynamicIEnvGenBuf.cpp
+)
+set(AlgaDynamicIEnvGenBuf_sc_files
+    plugins/AlgaDynamicIEnvGenBuf/AlgaDynamicIEnvGenBuf.sc
+)
+set(AlgaDynamicIEnvGenBuf_schelp_files
+    plugins/AlgaDynamicIEnvGenBuf/AlgaDynamicIEnvGenBuf.schelp
+)
+
+sc_add_server_plugin(
+    "AlgaDynamicIEnvGenBuf/AlgaDynamicIEnvGenBuf" # desination directory
+    "AlgaDynamicIEnvGenBuf" # target name
+    "${AlgaDynamicIEnvGenBuf_cpp_files}"
+    "${AlgaDynamicIEnvGenBuf_sc_files}"
+    "${AlgaDynamicIEnvGenBuf_schelp_files}"
+)
+
+# End target AlgaDynamicIEnvGenBuf
+####################################################################################################
+
+####################################################################################################
 # END PLUGIN TARGET DEFINITION
 ####################################################################################################
 
