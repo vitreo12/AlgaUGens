@@ -59,12 +59,12 @@ void AlgaDynamicIEnvGen_Ctor(AlgaDynamicIEnvGen* unit) {
             PHASOR_RESET_KR(false)
             SETCALC(AlgaDynamicIEnvGen_next_k);
         }
+        
+        //Always start from 1 (fully on)
+        OUT0(0) = 1.0f;
     }
     else
         SETCALC(ClearUnitOutputs);
-
-    //Always start from 1 (fully on)
-    OUT0(0) = 1.0f;
 }
 
 void AlgaDynamicIEnvGen_Dtor(AlgaDynamicIEnvGen* unit) { 

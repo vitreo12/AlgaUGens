@@ -87,12 +87,12 @@ void AlgaDynamicIEnvGenBuf_Ctor(AlgaDynamicIEnvGenBuf* unit) {
 
         //Update Buffer
         UPDATE_BUFFER
+            
+        //Always start from 0 (fully on)
+        OUT0(0) = 1.0f;
     }
     else
         SETCALC(ClearUnitOutputs);
-
-    //Always start from 0 (fully on)
-    OUT0(0) = 1.0f;
 }
 
 void AlgaDynamicIEnvGenBuf_Dtor(AlgaDynamicIEnvGenBuf* unit) { 
