@@ -188,6 +188,10 @@ void AlgaDynamicIEnvGenBuf_next_a(AlgaDynamicIEnvGenBuf* unit, int inNumSamples)
         UPDATE_BUFFER
     }
 
+    //Safety net in case the Ctor did not set a valid env
+    if(!unit->m_validEnv)
+        UPDATE_BUFFER
+
     //Processing
     if(unit->m_validEnv) {
         for (int i = 0; i < inNumSamples; i++) {
@@ -263,6 +267,10 @@ void AlgaDynamicIEnvGenBuf_next_k(AlgaDynamicIEnvGenBuf* unit, int inNumSamples)
         UPDATE_BUFFER
     }
 
+    //Safety net in case the Ctor did not set a valid env
+    if(!unit->m_validEnv)
+        UPDATE_BUFFER
+     
     //Processing
     if(unit->m_validEnv) {
         float phase = unit->phasor.advance() * unit->m_totalDur;
