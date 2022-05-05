@@ -189,8 +189,9 @@ void AlgaDynamicIEnvGenBuf_next_a(AlgaDynamicIEnvGenBuf* unit, int inNumSamples)
     }
 
     //Safety net in case the Ctor did not set a valid env
-    if(!unit->m_validEnv)
+    if(!unit->m_validEnv) {
         UPDATE_BUFFER
+    }
 
     //Processing
     if(unit->m_validEnv) {
@@ -268,8 +269,9 @@ void AlgaDynamicIEnvGenBuf_next_k(AlgaDynamicIEnvGenBuf* unit, int inNumSamples)
     }
 
     //Safety net in case the Ctor did not set a valid env
-    if(!unit->m_validEnv)
+    if(!unit->m_validEnv) {
         UPDATE_BUFFER
+    }
      
     //Processing
     if(unit->m_validEnv) {
