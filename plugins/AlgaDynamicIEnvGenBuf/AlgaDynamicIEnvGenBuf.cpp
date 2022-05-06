@@ -27,7 +27,6 @@ void AlgaDynamicIEnvGenBuf_Dtor(AlgaDynamicIEnvGenBuf* unit);
         World* world = unit->mWorld; \
         if (bufnum >= world->mNumSndBufs) \
             bufnum = world->mNumSndBufs; \
-        unit->m_fbufnum = fbufnum; \
         const SndBuf* buf = world->mSndBufs + bufnum; \
         ACQUIRE_SNDBUF_SHARED(buf); \
         const float* bufData __attribute__((__unused__)) = buf->data; \
@@ -35,6 +34,7 @@ void AlgaDynamicIEnvGenBuf_Dtor(AlgaDynamicIEnvGenBuf* unit);
             uint32 bufFrames = buf->frames; \
             UPDATE_ENVVALS \
             unit->m_validEnv = true; \
+            unit->m_fbufnum = fbufnum; \
         } \
         else { \
             unit->m_validEnv = false; \
