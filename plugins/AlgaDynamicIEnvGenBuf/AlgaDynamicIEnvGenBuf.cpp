@@ -47,6 +47,10 @@ void AlgaDynamicIEnvGenBuf_Dtor(AlgaDynamicIEnvGenBuf* unit);
     unit->m_numStages = (int)bufData[2]; \
     unit->m_totalDur = bufData[3]; \
     for (int i = 4; i < bufFrames; i++) { \
+        float val = bufData[i]; \
+        if(val == 987654321.0f) { \
+            break; \
+        } \
         unit->m_envvals[i-3] = bufData[i]; \
     }
 
