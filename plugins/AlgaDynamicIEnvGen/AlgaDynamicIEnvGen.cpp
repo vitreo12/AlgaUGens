@@ -1,11 +1,11 @@
 #include "SC_PlugIn.h"
-#include "ResettablePhasor.hpp"
+#include "../ResettablePhasor.hpp"
 
 struct AlgaDynamicIEnvGen : public Unit {
     ResettablePhasor phasor;
     float m_resetVal;
     float m_level, m_offset;
-    float m_startpoint, m_numvals, m_pointin;
+    float m_numvals, m_pointin;
     float* m_envvals;
 };
 
@@ -34,6 +34,7 @@ void AlgaDynamicIEnvGen_Ctor(AlgaDynamicIEnvGen* unit) {
     bool isFadeIn = (bool)IN0(unit->mNumInputs - 2);
     bool isFadeOut = (bool)IN0(unit->mNumInputs - 1);
 
+    unit->m_level = 0.0f;
     unit->m_resetVal = 1.0f; //Start from highest point (for fadeTime == 0)
     unit->phasor.init(isFadeIn, isFadeOut);
 

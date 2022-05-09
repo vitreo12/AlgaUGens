@@ -1,5 +1,5 @@
 #include "SC_PlugIn.h"
-#include "ResettablePhasor.hpp"
+#include "../ResettablePhasor.hpp"
 
 struct AlgaDynamicIEnvGenBuf : public Unit {
     ResettablePhasor phasor;
@@ -67,6 +67,8 @@ void AlgaDynamicIEnvGenBuf_Ctor(AlgaDynamicIEnvGenBuf* unit) {
     bool isFadeOut = (bool)IN0(3);
     unit->phasor.init(isFadeIn, isFadeOut);
 
+    Print("ERROR: NEW\n");
+
     unit->m_resetVal = 1.0f; //Start from highest point (for fadeTime == 0)
     unit->m_pointin = 0.0f;
     unit->m_fbufnum = -1e9f;
@@ -92,7 +94,7 @@ void AlgaDynamicIEnvGenBuf_Ctor(AlgaDynamicIEnvGenBuf* unit) {
         //Update Buffer
         UPDATE_BUFFER
             
-        //Always start from 0 (fully on)
+        //Always start from 1 (fully on)
         OUT0(0) = 1.0f;
     }
     else
@@ -249,7 +251,6 @@ void AlgaDynamicIEnvGenBuf_next_a(AlgaDynamicIEnvGenBuf* unit, int inNumSamples)
 }
 
 void AlgaDynamicIEnvGenBuf_next_k(AlgaDynamicIEnvGenBuf* unit, int inNumSamples) {
-    float* out = OUT(0);
     float level = unit->m_level;
     float point; // = unit->m_pointin;
     int stagemul;
@@ -266,7 +267,7 @@ void AlgaDynamicIEnvGenBuf_next_k(AlgaDynamicIEnvGenBuf* unit, int inNumSamples)
         else
             unit->m_resetVal = (1.0f - level) * unit->m_resetVal;
         PHASOR_RESET_KR(true)
-            
+
         //Should this be outside of the Release check?
         //The CPU gain of having it here is pretty neglegible
         UPDATE_BUFFER
@@ -320,10 +321,10 @@ void AlgaDynamicIEnvGenBuf_next_k(AlgaDynamicIEnvGenBuf* unit, int inNumSamples)
         if(unit->mDone)
             level = 0.0f;
 
-        out[0] = level;
+        OUT0(0) = level;
     }
     else
-        out[0] = 0.0f;
+        OUT0(0) = 0.0f;
 }
 
 PluginLoad(AlgaDynamicIEnvGenBufUGens) 
