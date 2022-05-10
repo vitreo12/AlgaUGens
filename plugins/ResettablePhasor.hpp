@@ -50,13 +50,13 @@ struct ResettablePhasor {
         }
 
         inline float advance() {
-            float result;
+            //Fallback value when phase just went over 1.0f the previous cycle
+            float result = 1.0f;
+
             if(phase < 1.0f) {
                 result = phase;
                 phase += increment;
             }
-            else
-                result = 1.0f;
 
             if((release || runOnce) && phase > 1.0f) {
                 if(!unit->mDone) {
