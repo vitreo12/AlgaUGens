@@ -67,8 +67,6 @@ void AlgaDynamicIEnvGenBuf_Ctor(AlgaDynamicIEnvGenBuf* unit) {
     bool isFadeOut = (bool)IN0(3);
     unit->phasor.init(isFadeIn, isFadeOut);
 
-    Print("ERROR: NEW\n");
-
     unit->m_resetVal = 1.0f; //Start from highest point (for fadeTime == 0)
     unit->m_pointin = 0.0f;
     unit->m_fbufnum = -1e9f;
