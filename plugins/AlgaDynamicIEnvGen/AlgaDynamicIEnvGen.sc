@@ -1,13 +1,13 @@
 AlgaDynamicIEnvGen : UGen {
 
-	*ar { arg envelope, fadeTime = 0, updateEnv = 0, isFadeIn = 0, isFadeOut = 0, mul = 1, add = 0;
+	*ar { arg envelope, fadeTime = 0, updateEnv = 0, isFadeIn = 0, isFadeOut = 0;
 		envelope = this.convertEnv(envelope, updateEnv, isFadeIn, isFadeOut);
-		^this.multiNewList(['audio', fadeTime, envelope]).madd(mul, add)
+		^this.multiNewList(['audio', fadeTime, envelope]);
 	}
 
-	*kr { arg envelope, fadeTime = 0, updateEnv = 0, isFadeIn = 0, isFadeOut = 0, mul = 1, add = 0;
+	*kr { arg envelope, fadeTime = 0, updateEnv = 0, isFadeIn = 0, isFadeOut = 0;
 		envelope = this.convertEnv(envelope, updateEnv, isFadeIn, isFadeOut);
-		^this.multiNewList(['control', fadeTime, envelope]).madd(mul, add)
+		^this.multiNewList(['control', fadeTime, envelope]);
 	}
 
 	*convertEnv { arg env, updateEnv, isFadeIn, isFadeOut;

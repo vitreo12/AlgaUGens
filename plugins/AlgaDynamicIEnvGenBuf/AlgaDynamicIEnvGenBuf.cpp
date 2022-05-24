@@ -1,66 +1,97 @@
 #include "SC_PlugIn.h"
 #include "../ResettablePhasor.hpp"
 
-struct AlgaDynamicIEnvGen : public Unit {
+struct AlgaDynamicIEnvGenBuf : public Unit {
     ResettablePhasor phasor;
     float m_resetVal;
-    float m_level, m_offset;
-    float m_numvals, m_pointin;
+    float m_level;
+    float m_pointin;
     float* m_envvals;
+    float m_totalDur;
+    int   m_numStages;
+    float m_fbufnum;
+    bool  m_validEnv;
 };
 
 extern "C" {
-void AlgaDynamicIEnvGen_next_a(AlgaDynamicIEnvGen* unit, int inNumSamples);
-void AlgaDynamicIEnvGen_next_k(AlgaDynamicIEnvGen* unit, int inNumSamples);
-void AlgaDynamicIEnvGen_Ctor(AlgaDynamicIEnvGen* unit);
-void AlgaDynamicIEnvGen_Dtor(AlgaDynamicIEnvGen* unit);
+void AlgaDynamicIEnvGenBuf_next_a(AlgaDynamicIEnvGenBuf* unit, int inNumSamples);
+void AlgaDynamicIEnvGenBuf_next_k(AlgaDynamicIEnvGenBuf* unit, int inNumSamples);
+void AlgaDynamicIEnvGenBuf_Ctor(AlgaDynamicIEnvGenBuf* unit);
+void AlgaDynamicIEnvGenBuf_Dtor(AlgaDynamicIEnvGenBuf* unit);
 }
 
+#define UPDATE_BUFFER \
+    float fbufnum = IN0(0); \
+    if (fbufnum >= 0 && fbufnum != unit->m_fbufnum) { \
+        uint32 bufnum = (int)fbufnum; \
+        World* world = unit->mWorld; \
+        if (bufnum >= world->mNumSndBufs) \
+            bufnum = world->mNumSndBufs; \
+        const SndBuf* buf = world->mSndBufs + bufnum; \
+        ACQUIRE_SNDBUF_SHARED(buf); \
+        const float* bufData __attribute__((__unused__)) = buf->data; \
+        if(bufData) { \
+            uint32 bufFrames = buf->frames; \
+            UPDATE_ENVVALS \
+            unit->m_validEnv = true; \
+            unit->m_fbufnum = fbufnum; \
+        } \
+        else { \
+            unit->m_validEnv = false; \
+        } \
+        RELEASE_SNDBUF_SHARED(buf); \
+    }
+
 #define UPDATE_ENVVALS \
-    for (int i = 1; i <= numStages * 4; i++) { \
-        unit->m_envvals[i] = IN0(4 + i); \
+    unit->m_envvals[0] = bufData[1]; \
+    unit->m_numStages = (int)bufData[2]; \
+    unit->m_totalDur = bufData[3]; \
+    for (int i = 4; i < bufFrames; i++) { \
+        float val = bufData[i]; \
+        if(val == 987654321.0f) { \
+            break; \
+        } \
+        unit->m_envvals[i-3] = bufData[i]; \
     }
 
 #define PHASOR_RESET_AR(RELEASE) \
-    float fadeTime = IN0(0); \
+    float fadeTime = IN0(1); \
     unit->phasor.reset(fadeTime * unit->mWorld->mSampleRate, unit, RELEASE);
 
 #define PHASOR_RESET_KR(RELEASE) \
-    float fadeTime = IN0(0); \
+    float fadeTime = IN0(1); \
     unit->phasor.reset((fadeTime * unit->mWorld->mSampleRate) / unit->mWorld->mBufLength, unit, RELEASE);
 
-void AlgaDynamicIEnvGen_Ctor(AlgaDynamicIEnvGen* unit) {
-
-    bool isFadeIn = (bool)IN0(unit->mNumInputs - 2);
-    bool isFadeOut = (bool)IN0(unit->mNumInputs - 1);
-
-    unit->m_level = 0.0f;
-    unit->m_resetVal = 1.0f; //Start from highest point (for fadeTime == 0)
+void AlgaDynamicIEnvGenBuf_Ctor(AlgaDynamicIEnvGenBuf* unit) {
+    bool isFadeIn = (bool)IN0(2);
+    bool isFadeOut = (bool)IN0(3);
     unit->phasor.init(isFadeIn, isFadeOut);
 
-    // pointer, offset
-    // initlevel, numstages, totaldur,
-    // [dur, shape, curve, level] * numvals
-    int numStages = (int)IN0(3);
-    int numvals = numStages * 4; // initlevel + (levels, dur, shape, curves) * stages
-    float offset = unit->m_offset = IN0(1);
-    float point = unit->m_pointin = 0.0f - offset;
-    unit->m_envvals = (float*)RTAlloc(unit->mWorld, (int)(numvals + 1.) * sizeof(float));
+    unit->m_resetVal = 1.0f; //Start from highest point (for fadeTime == 0)
+    unit->m_pointin = 0.0f;
+    unit->m_fbufnum = -1e9f;
+    unit->m_validEnv = false;
+    unit->m_numStages = 0.0f;
+    unit->m_totalDur = 0.0f;
+    unit->m_level = 0.0f;
 
-    if(unit->m_envvals)
-    {
-        unit->m_envvals[0] = IN0(2);
-
-        UPDATE_ENVVALS
-
+    int maxSize = (int)IN0(4);
+    int numVals = maxSize * 4; 
+    int allocSize = (int)(numVals + 1.) * sizeof(float);
+    unit->m_envvals = (float*)RTAlloc(unit->mWorld, allocSize);
+    if(unit->m_envvals) {
         if (unit->mCalcRate == calc_FullRate) {
             PHASOR_RESET_AR(false)
-            SETCALC(AlgaDynamicIEnvGen_next_a);
-        } else {
-            PHASOR_RESET_KR(false)
-            SETCALC(AlgaDynamicIEnvGen_next_k);
+            SETCALC(AlgaDynamicIEnvGenBuf_next_a);
         }
-        
+        else {
+            PHASOR_RESET_KR(false)
+            SETCALC(AlgaDynamicIEnvGenBuf_next_k);
+        }
+
+        //Update Buffer
+        UPDATE_BUFFER
+            
         //Always start from 1 (fully on)
         OUT0(0) = 1.0f;
     }
@@ -68,7 +99,7 @@ void AlgaDynamicIEnvGen_Ctor(AlgaDynamicIEnvGen* unit) {
         SETCALC(ClearUnitOutputs);
 }
 
-void AlgaDynamicIEnvGen_Dtor(AlgaDynamicIEnvGen* unit) { 
+void AlgaDynamicIEnvGenBuf_Dtor(AlgaDynamicIEnvGenBuf* unit) { 
     if(unit->m_envvals)
         RTFree(unit->mWorld, unit->m_envvals); 
 }
@@ -137,40 +168,124 @@ enum {
     }                                                                                                                  \
     }
 
-void AlgaDynamicIEnvGen_next_a(AlgaDynamicIEnvGen* unit, int inNumSamples) {
+void AlgaDynamicIEnvGenBuf_next_a(AlgaDynamicIEnvGenBuf* unit, int inNumSamples) {
     float* out = OUT(0);
-    float level = unit->m_level;
-    float offset = unit->m_offset;
-    int numStages = (int)IN0(3);
     float point; // = unit->m_pointin;
-
-    float totalDur = IN0(4);
-
+    float level = unit->m_level;
     int stagemul;
+    
     // pointer, offset
     // level0, numstages, totaldur,
     // [initval, [dur, shape, curve, level] * N ]
     
-    bool updateEnv = (bool)IN0(unit->mNumInputs-3);
-    if(updateEnv)
+    //Release
+    if(IN0(5))
     {
         if(!unit->phasor.release)
             unit->m_resetVal = level;
         else
             unit->m_resetVal = (1.0f - level) * unit->m_resetVal;
         PHASOR_RESET_AR(true)
-        UPDATE_ENVVALS
+        
+        //Should this be outside of the Release check?
+        //The CPU gain of having it here is pretty neglegible
+        UPDATE_BUFFER
     }
 
-    for (int i = 0; i < inNumSamples; i++) {
-        float phase = unit->phasor.advance() * totalDur;
+    //Safety net in case the Ctor did not set a valid env
+    if(!unit->m_validEnv) {
+        UPDATE_BUFFER
+    }
+
+    //Processing
+    if(unit->m_validEnv) {
+        for (int i = 0; i < inNumSamples; i++) {
+            float phase = unit->phasor.advance() * unit->m_totalDur;
+            if (phase != unit->m_pointin) {
+                unit->m_pointin = point = phase;
+                float newtime = 0.f;
+                int stage = 0;
+                float seglen = 0.f;
+                if (point >= unit->m_totalDur) {
+                    unit->m_level = level = unit->m_envvals[unit->m_numStages * 4]; // grab the last value
+                } else {
+                    if (point <= 0.0) {
+                        unit->m_level = level = unit->m_envvals[0];
+                    } else {
+                        float segpos = point;
+                        // determine which segment the current time pointer needs
+                        for (int j = 0; point >= newtime; j++) {
+                            seglen = unit->m_envvals[(j * 4) + 1];
+                            newtime += seglen;
+                            segpos -= seglen;
+                            stage = j;
+                        }
+                        stagemul = stage * 4;
+                        segpos = segpos + seglen;
+                        float begLevel = unit->m_envvals[stagemul];
+                        int shape = (int)unit->m_envvals[stagemul + 2];
+                        int curve = (int)unit->m_envvals[stagemul + 3];
+                        float endLevel = unit->m_envvals[stagemul + 4];
+                        float pos = (segpos / seglen);
+
+                        GET_ENV_VAL
+                    }
+                }
+            }
+            
+            //Invert on reset and scale according to resetVal
+            if(unit->phasor.release)
+                level = (1.0f - level) * unit->m_resetVal;
+
+            //If done, use 0.0f, or it will click at the end
+            if(unit->mDone)
+                level = 0.0f;
+
+            out[i] = level;
+        }
+    }
+    else 
+        ClearUnitOutputs(unit, inNumSamples);
+}
+
+void AlgaDynamicIEnvGenBuf_next_k(AlgaDynamicIEnvGenBuf* unit, int inNumSamples) {
+    float level = unit->m_level;
+    float point; // = unit->m_pointin;
+    int stagemul;
+
+    /* // pointer, offset */
+    /* // level0, numstages, totaldur, */
+    /* // [initval, [dur, shape, curve, level] * N ] */
+    
+    //Release
+    if(IN0(5))
+    {
+        if(!unit->phasor.release)
+            unit->m_resetVal = level;
+        else
+            unit->m_resetVal = (1.0f - level) * unit->m_resetVal;
+        PHASOR_RESET_KR(true)
+
+        //Should this be outside of the Release check?
+        //The CPU gain of having it here is pretty neglegible
+        UPDATE_BUFFER
+    }
+
+    //Safety net in case the Ctor did not set a valid env
+    if(!unit->m_validEnv) {
+        UPDATE_BUFFER
+    }
+     
+    //Processing
+    if(unit->m_validEnv) {
+        float phase = unit->phasor.advance() * unit->m_totalDur;
         if (phase != unit->m_pointin) {
-            unit->m_pointin = point = sc_max(phase - offset, 0.0);
+            unit->m_pointin = point = sc_max(phase, 0.0f);
             float newtime = 0.f;
             int stage = 0;
             float seglen = 0.f;
-            if (point >= totalDur) {
-                unit->m_level = level = unit->m_envvals[numStages * 4]; // grab the last value
+            if (point >= unit->m_totalDur) {
+                unit->m_level = level = unit->m_envvals[unit->m_numStages * 4]; // grab the last value
             } else {
                 if (point <= 0.0) {
                     unit->m_level = level = unit->m_envvals[0];
@@ -204,82 +319,14 @@ void AlgaDynamicIEnvGen_next_a(AlgaDynamicIEnvGen* unit, int inNumSamples) {
         if(unit->mDone)
             level = 0.0f;
 
-        out[i] = level;
+        OUT0(0) = level;
     }
+    else
+        OUT0(0) = 0.0f;
 }
 
-void AlgaDynamicIEnvGen_next_k(AlgaDynamicIEnvGen* unit, int inNumSamples) {
-    float* out = OUT(0);
-    float level = unit->m_level;
-    float offset = unit->m_offset;
-    int numStages = (int)IN0(3);
-    float point; // = unit->m_pointin;
-
-    float totalDur = IN0(4);
-
-    int stagemul;
-    // pointer, offset
-    // level0, numstages, totaldur,
-    // [initval, [dur, shape, curve, level] * N ]
-
-    bool updateEnv = (bool)IN0(unit->mNumInputs-3);
-    if(updateEnv)
-    {
-        if(!unit->phasor.release)
-            unit->m_resetVal = level;
-        else
-            unit->m_resetVal = (1.0f - level) * unit->m_resetVal;
-        PHASOR_RESET_KR(true)
-        UPDATE_ENVVALS
-    }
-
-    float phase = unit->phasor.advance() * totalDur;
-
-    if (phase != unit->m_pointin) {
-        unit->m_pointin = point = sc_max(phase - offset, 0.0);
-        float newtime = 0.f;
-        int stage = 0;
-        float seglen = 0.f;
-        if (point >= totalDur) {
-            unit->m_level = level = unit->m_envvals[numStages * 4]; // grab the last value
-        } else {
-            if (point <= 0.0) {
-                unit->m_level = level = unit->m_envvals[0];
-            } else {
-                float segpos = point;
-                // determine which segment the current time pointer needs
-                for (int j = 0; point >= newtime; j++) {
-                    seglen = unit->m_envvals[(j * 4) + 1];
-                    newtime += seglen;
-                    segpos -= seglen;
-                    stage = j;
-                }
-                stagemul = stage * 4;
-                segpos = segpos + seglen;
-                float begLevel = unit->m_envvals[stagemul];
-                int shape = (int)unit->m_envvals[stagemul + 2];
-                int curve = (int)unit->m_envvals[stagemul + 3];
-                float endLevel = unit->m_envvals[stagemul + 4];
-                float pos = (segpos / seglen);
-
-                GET_ENV_VAL
-            }
-        }
-    }
-    
-    //Invert on reset and scale according to resetVal
-    if(unit->phasor.release)
-        level = (1.0f - level) * unit->m_resetVal;
-
-    //If done, use 0.0f, or it will click at the end
-    if(unit->mDone)
-        level = 0.0f;
-
-    out[0] = level;
-}
-
-PluginLoad(AlgaDynamicIEnvGenUGens) 
+PluginLoad(AlgaDynamicIEnvGenBufUGens) 
 {
     ft = inTable; 
-    DefineDtorUnit(AlgaDynamicIEnvGen);
+    DefineDtorUnit(AlgaDynamicIEnvGenBuf);
 }

@@ -1,0 +1,8 @@
+class:: AlgaDynamicIEnvGenBuf
+summary:: Dynamic interpolation of Env using a Buffer 
+categories:: Alga
+related:: Classes/Env
+
+description::
+
+Dynamic interpolation of Env using a Buffer.

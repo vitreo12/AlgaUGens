@@ -5,25 +5,19 @@ static InterfaceTable *ft;
 struct ResettablePhasor {
     private:
         float phase;
-        float phaseResetVal;
-        float phaseResetValScale;
         float increment;
         bool  runOnce;
         Unit* unit;
 
     public:
         bool  release;
-        bool  releaseTriggered;
         bool  isFadeIn;
         bool  isFadeOut;
 
         inline void init(bool isFadeIn_ = false, bool isFadeOut_ = false) {
             phase = 0.0f;
-            phaseResetVal = 0.0f;
-            phaseResetValScale = 0.0f;
             increment = 0.0f;
             release = false;
-            releaseTriggered = false;
             runOnce = false;
             isFadeIn = isFadeIn_;
             isFadeOut = isFadeOut_;
@@ -38,32 +32,33 @@ struct ResettablePhasor {
             if(unit_)
                 unit = unit_;
 
-            //Retrieve peak and calculate scaling
-            phaseResetVal = phase;
-            if(phaseResetVal > 0.0f && phaseResetVal < 1.0)
-                phaseResetValScale = 1.0 / (1.0 - phaseResetVal);
+            //Phase needs to be reset regardless of t_release
+            phase = 0.0f;
 
-            //Only trigger the phase reset ONCE
-            if(release_ && !releaseTriggered)
-            {
+            //Triggered t_release
+            if(release_)
                 release = true;
-                releaseTriggered = true;
-                phase = 0.0f;
-                phaseResetVal = 0.0f;
-                phaseResetValScale = 0.0f;
-            }
 
+            //Calculate increment according to freq (determined by fadeTime)
             if(freq > 0.0f)
                 increment = 1.0f / freq;
-            else
+            else {
+                //This happens for fadeTime <= 0
                 increment = 1.0f;
+                phase = 1.1f; //Whatever value > 1.0f
+            }
         }
 
         inline float advance() {
-            float result = phase < 1.0f ? phase : 1.0f;
-            result = increment < 1.0f ? result : 1.0f;
-            phase += increment;
-            if((release || runOnce) && unit && phase > 1) {
+            //Fallback value when phase just went over 1.0f the previous cycle
+            float result = 1.0f;
+
+            if(phase < 1.0f) {
+                result = phase;
+                phase += increment;
+            }
+
+            if((release || runOnce) && phase > 1.0f) {
                 if(!unit->mDone) {
                     unit->mDone = true;
                     DoneAction(2, unit);
@@ -71,13 +66,6 @@ struct ResettablePhasor {
                 return 1.0f;
             }
 
-            if(phase > 1)
-                phase = 1.0f;
-
-            //Scale by the last reset to have 0-1 range at all times (with varying speed according to fadeTime)
-            if(phaseResetVal > 0.0f && phaseResetVal < 1.0)
-                result = (result - phaseResetVal) * phaseResetValScale; //a.k.a optimized linlin
-            
             return result;
         }
 };
