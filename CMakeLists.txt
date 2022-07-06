@@ -73,6 +73,9 @@ set(AlgaAudioControl_sc_files
 set(AlgaAudioControl_schelp_files
     plugins/AlgaAudioControl/AlgaAudioControl.schelp
 )
+set(AlgaAudioControl_systemoverwrites_files
+    plugins/AlgaAudioControl/SystemOverwrites/extAudioControl.sc
+)
 
 sc_add_server_plugin(
     "AlgaAudioControl/AlgaAudioControl" # desination directory
@@ -80,6 +83,7 @@ sc_add_server_plugin(
     "${AlgaAudioControl_cpp_files}"
     "${AlgaAudioControl_sc_files}"
     "${AlgaAudioControl_schelp_files}"
+    "${AlgaAudioControl_systemoverwrites_files}"
 )
 
 # End target AlgaAudioControl
@@ -104,6 +108,7 @@ sc_add_server_plugin(
     "${AlgaDynamicIEnvGen_cpp_files}"
     "${AlgaDynamicIEnvGen_sc_files}"
     "${AlgaDynamicIEnvGen_schelp_files}"
+    ""
 )
 
 # End target AlgaDynamicIEnvGen
@@ -128,6 +133,7 @@ sc_add_server_plugin(
     "${AlgaDynamicIEnvGenBuf_cpp_files}"
     "${AlgaDynamicIEnvGenBuf_sc_files}"
     "${AlgaDynamicIEnvGenBuf_schelp_files}"
+    ""
 )
 
 # End target AlgaDynamicIEnvGenBuf
